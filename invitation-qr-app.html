@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نظام دعوات الأفراح</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Tahoma,'Segoe UI',Arial,sans-serif;background:#faf7ff;min-height:100vh;}
+.header{background:linear-gradient(135deg,#7c3aed,#a855f7,#d946ef);padding:26px 20px 20px;text-align:center;color:white;}
+.header h1{font-size:18px;margin-bottom:4px;}.header p{font-size:12px;opacity:.85;}
+.steps{background:white;border-bottom:1px solid #f0ebff;padding:10px 12px;display:flex;}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.step-row{display:flex;align-items:center;width:100%;}
+.sline{flex:1;height:2px;background:#e9d5ff;}.sline.on{background:#a855f7;}
+.sdot{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:#f3e8ff;color:#c084fc;}
+.sdot.done{background:#7c3aed;color:white;}.sdot.active{background:#a855f7;color:white;}
+.slbl{font-size:10px;color:#9ca3af;}.slbl.active{color:#7c3aed;font-weight:700;}
+.content{max-width:600px;margin:0 auto;padding:18px 14px 60px;}
+.card{background:white;border-radius:18px;padding:20px;margin-bottom:16px;border:1px solid #f3e8ff;box-shadow:0 2px 16px rgba(124,58,237,.07);}
+.ctitle{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.cnum{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:#f3e8ff;color:#c084fc;}
+.cnum.active{background:#a855f7;color:white;}.cnum.done{background:#7c3aed;color:white;}
+.ctitle h2{font-size:15px;font-weight:700;color:#c084fc;margin:0;}
+.ctitle h2.active{color:#7c3aed;}.ctitle h2.done{color:#374151;}
+.hint{color:#6b7280;font-size:14px;line-height:1.7;margin-bottom:12px;}
+.fbtn{display:inline-block;color:white;border-radius:11px;padding:11px 18px;cursor:pointer;font-size:14px;font-weight:700;border:none;font-family:inherit;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+.grid3 label{display:block;font-size:11px;color:#6b7280;margin-bottom:5px;}
+.grid3 input{width:100%;padding:9px 6px;border:2px solid #e9d5ff;border-radius:9px;font-size:14px;text-align:center;outline:none;font-family:inherit;}
+.grid3 input:focus{border-color:#a855f7;}
+.pw{position:relative;background:#f5f0ff;border-radius:12px;padding:8px;margin-bottom:12px;}
+.pw img{display:block;width:100%;border-radius:8px;}
+.qbox{position:absolute;border:2.5px dashed #7c3aed;background:rgba(124,58,237,.18);border-radius:6px;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+.qbox span{color:#7c3aed;font-weight:800;font-size:13px;white-space:nowrap;}
+.btn{display:block;width:100%;color:white;border:none;border-radius:11px;padding:13px 18px;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;}
+.prog-w{background:#e9d5ff;border-radius:999px;height:10px;overflow:hidden;margin:8px 0;}
+.prog-b{height:100%;background:linear-gradient(90deg,#7c3aed,#d946ef);border-radius:999px;transition:width .2s;}
+.okbox{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:11px 14px;font-size:14px;color:#15803d;margin-bottom:16px;}
+.errbox{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:12px 14px;font-size:13px;color:#dc2626;margin-top:12px;word-break:break-all;}
+.tipbox{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;font-size:13px;color:#854d0e;margin-top:16px;}
+.ritem{border:1px solid #e9d5ff;border-radius:16px;overflow:hidden;margin-bottom:20px;}
+.rhdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#faf7ff;flex-wrap:wrap;gap:8px;}
+.rname{font-weight:700;font-size:15px;}.rsub{color:#9ca3af;font-size:12px;}
+.rimg{width:100%;display:block;}
+.shint{background:#f0f9ff;padding:10px 14px;font-size:12px;color:#0369a1;text-align:center;}
+a.wa{background:#25d366;color:white;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;text-decoration:none;display:inline-block;}
+.rowbw{display:flex;align-items:center;justify-content:space-between;}
+.ghost{background:transparent;color:#7c3aed;border:1px solid #c084fc;border-radius:9px;padding:7px 14px;cursor:pointer;font-size:13px;font-family:inherit;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div style="font-size:28px;margin-bottom:4px">💌</div>
+  <h1>نظام دعوات الأفراح</h1>
+  <p>بطاقات شخصية مع QR لكل ضيفة</p>
+</div>
+<div class="steps" id="stepsBar"></div>
+<div class="content">
+
+  <div class="card" id="card0">
+    <div class="ctitle"><div class="cnum active" id="n0">1</div><h2 class="active">قائمة الضيوف</h2></div>
+    <div id="s0b">
+      <p class="hint">ارفعي ملف CSV فيه عمودين: <b>name</b> و <b>phone</b></p>
+      <input type="file" accept=".csv" id="csvIn" class="hidden">
+      <button class="fbtn" style="background:#7c3aed" onclick="document.getElementById('csvIn').click()">📂 ارفعي ملف CSV</button>
+      <p id="csvErr" class="hidden" style="color:#dc2626;margin-top:10px;font-size:13px"></p>
+      <p style="color:#9ca3af;font-size:11px;margin-top:12px">💡 Google Sheets ← ملف ← تنزيل ← CSV</p>
+    </div>
+    <div id="s0d" class="hidden rowbw">
+      <span style="color:#16a34a;font-weight:600;font-size:14px" id="gCount"></span>
+      <button class="ghost" onclick="resetAll()">تغيير</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="card1">
+    <div class="ctitle"><div class="cnum" id="n1">2</div><h2 id="h1">تصميم البطاقة وموضع الـ QR</h2></div>
+    <div id="s1b">
+      <p class="hint">ارفعي صورة البطاقة (PNG أو JPG)</p>
+      <input type="file" accept="image/*" id="tplIn" class="hidden">
+      <button class="fbtn" style="background:#a855f7" onclick="document.getElementById('tplIn').click()">🖼️ ارفعي صورة البطاقة</button>
+      <div id="tplC" class="hidden" style="margin-top:20px">
+        <p class="hint" style="font-weight:700;color:#374151;margin-bottom:10px">📍 حددي موضع الـ QR:</p>
+        <div class="grid3">
+          <div><label>↔️ X أفقي</label><input type="number" id="qrX" value="100" min="0" oninput="updateBox()"></div>
+          <div><label>↕️ Y عمودي</label><input type="number" id="qrY" value="100" min="0" oninput="updateBox()"></div>
+          <div><label>📐 الحجم</label><input type="number" id="qrSz" value="200" min="50" oninput="updateBox()"></div>
+        </div>
+        <div class="pw" id="pw">
+          <img id="pi" src="" alt="البطاقة">
+          <div class="qbox" id="qb"><span>QR هنا</span></div>
+        </div>
+        <p style="color:#7c3aed;font-size:12px;margin-bottom:16px">↑ المربع البنفسجي = موضع الـ QR — عدّلي الأرقام حتى يصير في المكان الصح</p>
+        <button class="btn" style="background:#7c3aed" onclick="goGen()">التالي: توليد البطاقات ←</button>
+      </div>
+    </div>
+    <div id="s1d" class="hidden"><span style="color:#16a34a;font-weight:600;font-size:14px" id="tplDone"></span></div>
+  </div>
+
+  <div class="card hidden" id="card2">
+    <div class="ctitle"><div class="cnum" id="n2">3</div><h2 class="active" id="h2">توليد البطاقات</h2></div>
+    <p class="hint" id="gHint"></p>
+    <button class="btn" style="background:#f59e0b;margin-top:8px" id="genBtn" onclick="generateAll()">⚡ ابدئي التوليد</button>
+    <div class="hidden" id="gProg">
+      <div class="prog-w"><div class="prog-b" id="pb" style="width:0%"></div></div>
+      <p style="text-align:center;color:#7c3aed;font-size:14px;margin-top:6px" id="pt"></p>
+    </div>
+    <div class="errbox hidden" id="gErr"></div>
+  </div>
+
+  <div class="card hidden" id="card3">
+    <div class="ctitle"><div class="cnum active" id="n3">4</div><h2 class="active">البطاقات جاهزة 🎉</h2></div>
+    <div class="okbox" id="okTxt"></div>
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#0369a1;line-height:1.9">
+      📱 <b>كيف تحفظين البطاقة على جوالك؟</b><br>
+      اضغطي على الصورة مطوّلاً ← اختاري "حفظ الصورة"
+    </div>
+    <div id="cList"></div>
+    <div class="tipbox">💡 بعد حفظ الصورة اضغطي 📱 يفتح واتساب مع الضيفة ← أرسلي الصورة من معرض صورك</div>
+  </div>
+
+</div>
+<div id="qrWrap" style="position:fixed;left:-9999px;top:0;visibility:hidden"></div>
+<script>
+var guests=[],tplUrl=null,tplW=1,tplH=1,cards=[],step=0;
+var LBLS=["الضيوف","البطاقة","توليد","إرسال"];
+
+function renderSteps(){
+  document.getElementById('stepsBar').innerHTML=LBLS.map(function(s,i){
+    return '<div class="step"><div class="step-row">'+
+      (i>0?'<div class="sline '+(step>i-1?'on':'')+'"></div>':'')+
+      '<div class="sdot '+(step>i?'done':step===i?'active':'')+'">'+( step>i?'✓':i+1)+'</div>'+
+      (i<3?'<div class="sline '+(step>i?'on':'')+'"></div>':'')+
+      '</div><span class="slbl '+(step===i?'active':'')+'">' +s+'</span></div>';
+  }).join('');
+}
+renderSteps();
+
+document.getElementById('csvIn').addEventListener('change',function(e){
+  var f=e.target.files[0];if(!f)return;
+  Papa.parse(f,{header:true,skipEmptyLines:true,complete:function(r){
+    var ks=r.meta.fields||[];
+    var nk=ks.find(function(k){return /name|اسم|ism/i.test(k);})||ks[0];
+    var pk=ks.find(function(k){return /phone|رقم|tel|mob|جوال/i.test(k);})||ks[1];
+    var rows=r.data.map(function(row){return{name:(row[nk]||'').trim(),phone:(row[pk]||'').trim()};}).filter(function(r){return r.name;});
+    if(!rows.length){sh('csvErr');document.getElementById('csvErr').textContent='⚠️ ما لقيت بيانات';return;}
+    guests=rows;
+    hi('s0b');sh('s0d');
+    document.getElementById('gCount').textContent='✅ '+guests.length+' ضيفة محملة';
+    done('n0');sh('card1');act('n1');act('h1');step=1;renderSteps();
+  },error:function(){document.getElementById('csvErr').textContent='⚠️ خطأ';sh('csvErr');}});
+});
+
+function resetAll(){
+  guests=[];tplUrl=null;cards=[];step=0;
+  sh('s0b');hi('s0d');hi('card1');hi('card2');hi('card3');
+  var n=document.getElementById('n0');n.className='cnum active';n.textContent='1';
+  renderSteps();
+}
+
+document.getElementById('tplIn').addEventListener('change',function(e){
+  var f=e.target.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(ev){
+    tplUrl=ev.target.result;
+    var img=new Image();
+    img.onload=function(){tplW=img.naturalWidth;tplH=img.naturalHeight;
+      document.getElementById('pi').src=tplUrl;sh('tplC');setTimeout(updateBox,200);};
+    img.src=tplUrl;
+  };
+  rd.readAsDataURL(f);
+});
+
+function updateBox(){
+  var pw=document.getElementById('pw'),pi=document.getElementById('pi'),qb=document.getElementById('qb');
+  var dW=pw.clientWidth-16,dH=pi.clientHeight;
+  if(!dH||!tplW)return;
+  var x=+document.getElementById('qrX').value||0,y=+document.getElementById('qrY').value||0,sz=+document.getElementById('qrSz').value||100;
+  qb.style.left=(8+x*(dW/tplW))+'px';qb.style.top=(8+y*(dH/tplH))+'px';
+  qb.style.width=(sz*(dW/tplW))+'px';qb.style.height=(sz*(dH/tplH))+'px';
+}
+window.addEventListener('resize',updateBox);
+
+function goGen(){
+  hi('s1b');sh('s1d');
+  document.getElementById('tplDone').textContent='✅ البطاقة جاهزة — QR عند ('+
+    document.getElementById('qrX').value+','+document.getElementById('qrY').value+') حجم '+document.getElementById('qrSz').value;
+  done('n1');done2('h1');sh('card2');act('n2');
+  document.getElementById('gHint').innerHTML='سيتم إنشاء <b style="color:#7c3aed">'+guests.length+'</b> بطاقة';
+  step=2;renderSteps();
+}
+
+function makeQR(code,size){
+  return new Promise(function(resolve){
+    var wrap=document.getElementById('qrWrap');
+    var div=document.createElement('div');wrap.appendChild(div);
+    try{new QRCode(div,{text:code,width:size,height:size,correctLevel:QRCode.CorrectLevel.L});}
+    catch(e){wrap.removeChild(div);var fc=mkBlank(size);resolve(fc);return;}
+    setTimeout(function(){
+      var canvas=div.querySelector('canvas'),img=div.querySelector('img');
+      wrap.removeChild(div);
+      if(canvas){resolve(canvas);return;}
+      if(img){var c=mkBlank(size);var tmp=new Image();
+        tmp.onload=function(){c.getContext('2d').drawImage(tmp,0,0,size,size);resolve(c);};tmp.src=img.src;return;}
+      resolve(mkBlank(size));
+    },200);
+  });
+}
+function mkBlank(s){var c=document.createElement('canvas');c.width=s;c.height=s;c.getContext('2d').fillStyle='#fff';c.getContext('2d').fillRect(0,0,s,s);return c;}
+function loadI(src){return new Promise(function(res,rej){var i=new Image();i.onload=function(){res(i);};i.onerror=rej;i.src=src;});}
+
+// Template loaded once globally for memory efficiency
+var cachedTpl=null;
+
+async function buildCard(tplImg,idx,sz,x,y){
+  var code='G'+String(idx+1).padStart(3,'0');
+  var qrc=await makeQR(code,sz);
+  var c=document.createElement('canvas');
+  c.width=tplImg.naturalWidth;c.height=tplImg.naturalHeight;
+  var ctx=c.getContext('2d');
+  ctx.drawImage(tplImg,0,0);
+  ctx.drawImage(qrc,x,y,sz,sz);
+  var fs=Math.max(18,Math.round(sz*0.13));
+  ctx.font="bold "+fs+"px Tahoma,Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="top";
+  var nm=guests[idx].name;
+  var tm=ctx.measureText(nm);
+  ctx.fillStyle="rgba(255,255,255,0.8)";
+  ctx.fillRect(x+sz/2-tm.width/2-8,y+sz+4,tm.width+16,fs+10);
+  ctx.fillStyle="#1f2937";
+  ctx.fillText(nm,x+sz/2,y+sz+8);
+  var data=c.toDataURL('image/png');
+  // Free canvas memory
+  c.width=0;c.height=0;
+  return{dataUrl:data,code:code};
+}
+
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+async function generateAll(){
+  if(!tplUrl||!guests.length)return;
+  var x=+document.getElementById('qrX').value||0;
+  var y=+document.getElementById('qrY').value||0;
+  var sz=+document.getElementById('qrSz').value||200;
+  hi('genBtn');hi('gErr');sh('gProg');cards=[];
+  try{
+    // Load template once only
+    cachedTpl=await loadI(tplUrl);
+    for(var i=0;i<guests.length;i++){
+      var res=await buildCard(cachedTpl,i,sz,x,y);
+      cards.push({name:guests[i].name,phone:guests[i].phone,dataUrl:res.dataUrl,code:res.code});
+      var pct=Math.round((i+1)/guests.length*100);
+      document.getElementById('pb').style.width=pct+'%';
+      document.getElementById('pt').textContent=pct+'% — بطاقة '+(i+1)+' من '+guests.length;
+      // Small pause every 10 cards to prevent memory overflow
+      if(i>0&&i%10===0) await sleep(200);
+    }
+    showResults();
+  }catch(err){
+    document.getElementById('gErr').textContent='⚠️ '+(err&&err.message?err.message:String(err));
+    sh('gErr');sh('genBtn');
+  }
+}
+
+function dataUrlToFile(dataUrl, name){
+  var arr=dataUrl.split(','), mime=arr[0].match(/:(.*?);/)[1];
+  var bstr=atob(arr[1]), n=bstr.length, u8=new Uint8Array(n);
+  while(n--) u8[n]=bstr.charCodeAt(n);
+  return new File([u8], name+'.png', {type:'image/png'});
+}
+
+async function shareGroup(group){
+  var files=group.map(function(c){ return dataUrlToFile(c.dataUrl, c.name); });
+  if(navigator.share && navigator.canShare && navigator.canShare({files:files})){
+    await navigator.share({files:files, title:'بطاقات الدعوة'});
+  }
+}
+
+async function saveAll(){
+  var btn=document.getElementById('saveAllBtn');
+  btn.disabled=true;
+  // Split into groups of 10
+  var size=10;
+  var groups=[];
+  for(var i=0;i<cards.length;i+=size){
+    groups.push(cards.slice(i,i+size));
+  }
+  try{
+    for(var g=0;g<groups.length;g++){
+      btn.textContent='📤 إرسال المجموعة '+(g+1)+' من '+groups.length+'...';
+      await shareGroup(groups[g]);
+    }
+    btn.textContent='✅ تم!';
+    setTimeout(function(){ btn.textContent='📥 حفظ كل البطاقات دفعة وحدة'; btn.disabled=false; }, 2000);
+  }catch(e){
+    if(e.name!=='AbortError') alert('خطأ: '+e.message);
+    btn.textContent='📥 حفظ كل البطاقات دفعة وحدة';
+    btn.disabled=false;
+  }
+}
+function showResults(){
+  done("n2");done2("h2");sh("card3");
+  document.getElementById("okTxt").textContent="✅ "+cards.length+" بطاقة جاهزة!";
+  document.getElementById("cList").innerHTML='<button id="saveAllBtn" onclick="saveAll()" style="display:block;width:100%;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:20px;">📥 حفظ كل البطاقات دفعة وحدة</button>'+cards.map(function(c,i){
+    return '<div class="ritem"><div class="rhdr"><div><div class="rname">'+c.name+'</div><div class="rsub">'+( c.phone||"")+' • '+c.code+'</div></div>'+
+      (c.phone?'<a class="wa" href="'+waLink(c.phone)+'" target="_blank">📱</a>':"")+
+      '</div><img class="rimg" src="'+c.dataUrl+'"><div class="shint">👆 اضغطي مطوّلاً للحفظ</div></div>';
+  }).join("");
+  step=3;renderSteps();
+  document.getElementById("card3").scrollIntoView({behavior:"smooth"});
+}
+
+function waLink(p){var cl=p.replace(/\D/g,'');return 'https://wa.me/'+(cl.startsWith('0')?'966'+cl.slice(1):cl);}
+function sh(id){document.getElementById(id).classList.remove('hidden');}
+function hi(id){document.getElementById(id).classList.add('hidden');}
+function done(id){var el=document.getElementById(id);el.className='cnum done';el.textContent='✓';}
+function done2(id){document.getElementById(id).className='done';}
+function act(id){document.getElementById(id).classList.add('active');}
+</script>
+</body>
+</html>
